@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'patient_manager',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'patients_managment.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgres.sql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv("POSTGRES_DB_NAME"),
         'USER': os.getenv("POSTGRES_USERNAME"),
         'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
