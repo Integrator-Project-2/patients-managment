@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'patient_manager',
+    'medical_prescriptions',
 ]
 
 MIDDLEWARE = [
