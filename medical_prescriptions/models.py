@@ -1,9 +1,10 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 class MedicalPrescription(models.Model):
     doctor_id = models.IntegerField()
     patient_id = models.IntegerField()
-    medication_id = models.IntegerField()
+    medication_ids = ArrayField(models.IntegerField(), default=list)
     description = models.TextField()
     dose = models.CharField(max_length=255)
     prescription_file = models.FileField(upload_to='prescriptions/', null=True, blank=True)
