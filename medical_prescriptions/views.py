@@ -3,11 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
-from .models import MedicalPrescription
 from medical_prescriptions.serializers import MedicalPrescriptionSerializer
 from medical_prescriptions.utils import generate_pdf
 
-class MedicalPrescriptionCreateAPIView(APIView): 
+class MedicalPrescriptionCreateAPIView(APIView):     
     def post(self, request):
         serializer = MedicalPrescriptionSerializer(data=request.data)
         
