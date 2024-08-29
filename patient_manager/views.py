@@ -1,13 +1,9 @@
-import os
 import requests
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-
-from medical_prescriptions.models import MedicalPrescription
-from medical_prescriptions.serializers import MedicalPrescriptionSerializer
 from .models import DoctorPatientAssociation
 class AssociateDoctorPatientAPIView(APIView):
     
@@ -39,47 +35,3 @@ class AssociateDoctorPatientAPIView(APIView):
         except requests.exceptions.RequestException as e:
             return Response({'error': 'Erro de conexão com o microserviço de médicos ou pacientes.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class PatientPrescriptionsAPIView(APIView):
-    def get(self, request, patient_id):
-        prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id)
-        
-        if prescriptions.exists():
-            serializer = MedicalPrescriptionSerializer(prescriptions, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({"detail": "No prescriptions found for this patient"}, status=status.HTTP_404_NOT_FOUND)
-    
-class PatientMedicationsAPIView(APIView):
-    def get(self, request, patient_id):
-        prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id)
-        
-        if prescriptions.exists():
-            medication_ids = []
-            
-            for prescription in prescriptions:
-                medication_ids.extend(prescription.medication_ids)
-                
-            # remove duplicates
-            medication_ids = list(set(medication_ids))
-            
-            medications = []
-            medications_service_base_url = os.getenv('MEDICATIONS_SERVICE_BASE_API_URL')
-            for medication_id in medication_ids:
-                response = requests.get(f'{medications_service_base_url}/api/medications/{medication_id}/')
-                
-                if response.status_code == 200:
-                    medications.append(response.json())
-                else:
-                    medications.append({
-                        'id': medication_id,
-                        'detail': 'not found',
-                    })
-                
-            return Response({'medications': medications}, status=status.HTTP_200_OK)
-        return Response({"detail": "No prescriptions found for this patient."}, status=status.HTTP_404_NOT_FOUND)
-                
-        
-        
-        
-        
-             
-                
