@@ -8,4 +8,4 @@ class MedicalPrescriptionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MedicalPrescription
-        fields = ['doctor_id', 'patient_id', 'medication_ids', 'description', 'dose']
+        fields = ['id','doctor_id', 'patient_id', 'medication_ids', 'description', 'dose', 'date', 'prescription_file']
