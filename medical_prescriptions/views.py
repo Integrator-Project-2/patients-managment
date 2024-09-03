@@ -35,7 +35,7 @@ class MedicalPrescriptionCreateAPIView(APIView):
 
 class PatientPrescriptionsAPIView(APIView):
     def get(self, request, patient_id):
-        prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id)
+        prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id).order_by('-date')
         
         if prescriptions.exists():
             serializer = MedicalPrescriptionSerializer(prescriptions, many=True)
