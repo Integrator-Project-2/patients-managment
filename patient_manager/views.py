@@ -7,12 +7,16 @@ from rest_framework import status
 from medical_prescriptions.models import MedicalPrescription
 from medical_prescriptions.serializers import MedicalPrescriptionSerializer
 from .models import DoctorPatientAssociation
+from django.conf import settings
 
 class AssociateDoctorPatientAPIView(APIView):
     
     def post(self, request, format=None):
         doctor_id = request.data.get('doctor_id')
         patient_id = request.data.get('patient_id')
+        
+        if DoctorPatientAssociation.objects.filter(doctor_id=doctor_id, patient_id=patient_id).exists():
+            return Response({'message': 'Esse vínculo já existe.'}, status=status.HTTP_200_OK)
                 
         try:
             association = DoctorPatientAssociation.objects.create(
@@ -23,6 +27,34 @@ class AssociateDoctorPatientAPIView(APIView):
             return Response({'success': 'Vínculo criado com sucesso!'}, status=status.HTTP_201_CREATED)
         except requests.exceptions.RequestException as e:
             return Response({'error': 'Erro de conexão com o microserviço de médicos ou pacientes.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class DoctorPatientsListAPIView(APIView):
+    
+    def get(self, request, doctor_id, format=None):
+        associations = DoctorPatientAssociation.objects.filter(doctor_id=doctor_id)
+        
+        patient_ids = associations.values_list('patient_id', flat=True)
+        
+        print("patient_ids: ", list(patient_ids))
+        
+        if not patient_ids:
+            return Response({"error": "No patients found for this doctor."}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            url = f"{settings.USER_SERVICE_BASE_API_URL}/pacients/search-by-ids/"
+            
+            print('url: ', url)
+            
+            response = requests.post(url, json={"patient_ids": list(patient_ids)})
+            
+            if response.status_code == 200:
+                patients_data = response.json()
+                return Response(patients_data, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Failed to fetch patient data from user-service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        except requests.exceptions.RequestException as e:
+            return Response({"error": "Error connecting to user-service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class PatientPrescriptionsAPIView(APIView):
     def get(self, request, patient_id):
