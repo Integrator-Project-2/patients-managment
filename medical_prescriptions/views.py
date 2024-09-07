@@ -46,34 +46,49 @@ class PatientMedicationsAPIView(APIView):
     def get(self, request, patient_id):
         prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id)
         
-        if prescriptions.exists():
-            medication_ids = []
+        if not prescriptions.exists():
+            return Response({"detail": "No prescriptions found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+        
+        medication_ids = []
+        for prescription in prescriptions:
+            medication_ids.extend(prescription.medication_ids)
+
+        medication_ids = list(set(medication_ids))
+        
+        medications_service_base_url = os.getenv('MEDICATIONS_SERVICE_BASE_API_URL')
+        if not medications_service_base_url:
+            return Response({"detail": "Medications service base URL not configured."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        medications = []
+        name_query = request.query_params.get('name', None)
+
+        for medication_id in medication_ids:
+            url = f'{medications_service_base_url}/api/medications/{medication_id}/'
+            if name_query:
+                url += f'?name={name_query}'
             
-            for prescription in prescriptions:
-                medication_ids.extend(prescription.medication_ids)
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                medication_data = response.json()
                 
-            # remove duplicates
-            medication_ids = list(set(medication_ids))
-            
-            medications = []
-            medications_service_base_url = os.getenv('MEDICATIONS_SERVICE_BASE_API_URL')
-            for medication_id in medication_ids:
-                response = requests.get(f'{medications_service_base_url}/api/medications/{medication_id}/')
-                
-                if response.status_code == 200:
-                    medications.append(response.json())
+                if 'name' in medication_data:
+                    medications.append(medication_data)
                 else:
                     medications.append({
                         'id': medication_id,
-                        'detail': 'not found',
+                        'detail': 'Name field not found in medication response',
                     })
-                
-            return Response({'medications': medications}, status=status.HTTP_200_OK)
-        return Response({"detail": "No prescriptions found for this patient."}, status=status.HTTP_404_NOT_FOUND)
-                
+            
+            except requests.RequestException as e:
+                medications.append({
+                    'id': medication_id,
+                    'detail': f'Error fetching medication: {str(e)}',
+                })
         
+        if name_query:
+            medications = [
+                medication for medication in medications if 'name' in medication and name_query.lower() in medication['name'].lower()
+            ]
         
-        
-        
-             
-                
+        return Response({'medications': medications}, status=status.HTTP_200_OK)

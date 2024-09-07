@@ -9,7 +9,7 @@ class MedicalPrescription(models.Model):
     description = models.TextField()
     dose = models.CharField(max_length=255)
     prescription_file = models.FileField(upload_to='prescriptions/', null=True, blank=True)
-    date = models.DateField(default=localtime())
+    date = models.DateField(auto_now_add=True)
     
 class AuditLog(models.Model):
     doctor_id = models.IntegerField()
