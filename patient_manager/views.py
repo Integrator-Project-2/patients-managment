@@ -1,5 +1,6 @@
 import os
 import requests
+import base64
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -61,8 +62,25 @@ class PatientPrescriptionsAPIView(APIView):
         prescriptions = MedicalPrescription.objects.filter(patient_id=patient_id)
         
         if prescriptions.exists():
-            serializer = MedicalPrescriptionSerializer(prescriptions, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            response_data = []
+            for prescription in prescriptions:
+                serializer = MedicalPrescriptionSerializer(prescription)
+                
+                # Adiciona o campo prescription_pdf no dicionário do serializer
+                prescription_data = serializer.data
+                
+                if prescription.prescription_file:
+                    with prescription.prescription_file.open('rb') as pdf_file:
+                        pdf_content = pdf_file.read()
+                        pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                        prescription_data['prescription_pdf'] = pdf_base64
+                else:
+                    prescription_data['prescription_pdf'] = None
+
+                response_data.append(prescription_data)
+
+            return Response(response_data, status=status.HTTP_200_OK)
+        
         return Response({"detail": "No prescriptions found for this patient"}, status=status.HTTP_404_NOT_FOUND)
     
 class PatientMedicationsAPIView(APIView):
@@ -87,10 +105,7 @@ class PatientMedicationsAPIView(APIView):
                 if response.status_code == 200:
                     medications.append(response.json())
                 else:
-                    medications.append({
-                        'id': medication_id,
-                        'detail': 'not found',
-                    })
+                    continue
                 
             return Response({'medications': medications}, status=status.HTTP_200_OK)
         return Response({"detail": "No prescriptions found for this patient."}, status=status.HTTP_404_NOT_FOUND)
