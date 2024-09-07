@@ -1,3 +1,4 @@
+import os
 import requests
 import base64
 from django.shortcuts import render
