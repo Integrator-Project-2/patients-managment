@@ -10,7 +10,7 @@ class MedicalPrescriptionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MedicalPrescription
-        fields = ['id', 'doctor_id', 'patient_id', 'medication_ids', 'description', 'dose', 'date', 'prescription_file','prescription_pdf']
+        fields = ['id', 'doctor_id', 'patient_id', 'medication_ids', 'description', 'date', 'prescription_file','prescription_pdf']
         
     def get_prescription_pdf(self, obj):
         """Método para obter o PDF da prescrição como base64, se disponível."""

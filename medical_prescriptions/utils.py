@@ -11,7 +11,6 @@ def generate_pdf(prescription_data):
     p.drawString(100, height - 120, f"Patient ID: {prescription_data['patient_id']}")
     p.drawString(100, height - 140, f"Medication ID: {prescription_data['medication_ids']}")
     p.drawString(100, height - 160, f"Description: {prescription_data['description']}")
-    p.drawString(100, height - 180, f"Dose: {prescription_data['dose']}")
 
     p.showPage()
     p.save()
